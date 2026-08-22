@@ -147,7 +147,7 @@
             font-weight: 600;
         }
 
-        /* M9: AI Assistant Floating Widget UI */
+        /* AI Assistant Floating Widget UI */
         .ai-chat-btn {
             position: fixed;
             bottom: 25px;
@@ -220,7 +220,7 @@
             <a class="nav-link" href="#leave-requests"><i class="bi bi-file-earmark-text"></i> Leave Requests</a>
             <a class="nav-link" href="#student-issues"><i class="bi bi-exclamation-triangle"></i> Student Tickets</a>
             <a class="nav-link" href="#master-list"><i class="bi bi-people-fill"></i> Approved Master List</a>
-            <a class="nav-link" href="javascript:void(0)" onclick="toggleAIChat()"><i class="bi bi-robot"></i> AI Assistant (M9)</a>
+            <a class="nav-link" href="javascript:void(0)" onclick="toggleAIChat()"><i class="bi bi-robot"></i> AI Assistant</a>
         </nav>
     </aside>
 
@@ -400,11 +400,11 @@
             </div>
         </section>
 
-        <!-- ૬. ફાઇનલ એપ્રૂવ્ડ સ્ટુડન્ટ્સ માસ્ટર લિસ્ટ (M10: CSV Import/Export સાથે) -->
+        <!-- ૬. ફાઇનલ એપ્રૂવ્ડ સ્ટુડન્ટ્સ માસ્ટર લિસ્ટ (CSV Import/Export સાથે) -->
         <section id="master-list" class="dashboard-card">
             <div class="card-header-custom bg-dark text-white rounded-top">
                 <h5 class="text-white"><i class="bi bi-mortarboard me-2"></i>Approved Students Master List</h5>
-                <!-- M10 CSV Tools Buttons -->
+                <!-- CSV Tools Buttons -->
                 <div class="d-flex gap-2">
                     <input type="file" id="csv-file-input" accept=".csv" class="d-none" onchange="uploadCSV(event)">
                     <button class="btn btn-sm btn-outline-light" onclick="document.getElementById('csv-file-input').click()">
@@ -434,7 +434,7 @@
 
     </div>
 
-    <!-- M9: AI Assistant Floating Widget -->
+    <!-- AI Assistant Floating Widget -->
     <button class="btn btn-primary ai-chat-btn" onclick="toggleAIChat()">
         <i class="bi bi-robot me-1"></i> Ask AI
     </button>
@@ -612,7 +612,7 @@
             }
         }
 
-        // M10: CSV Upload Functionality
+        // CSV Upload Functionality
         async function uploadCSV(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -636,12 +636,12 @@
             }
         }
 
-        // M10: CSV Export Functionality
+        // CSV Export Functionality
         function exportCSV() {
             window.open(`${API_URL}/api/students/export-csv`, '_blank');
         }
 
-        // M9: AI Assistant Toggle & Chat Logic
+        // AI Assistant Toggle & Chat Logic
         function toggleAIChat() {
             const widget = document.getElementById('ai-chat-widget');
             widget.style.display = (widget.style.display === 'flex') ? 'none' : 'flex';
