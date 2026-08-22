@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proctor Dashboard - ProctorPlus</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --sidebar-width: 250px;
+            --primary-bg: #f8fafc;
+            --sidebar-bg: #0f172a;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 1.5rem 1rem;
+            color: #f8fafc;
+        }
+
+        .sidebar .nav-link {
+            color: #94a3b8;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            color: #ffffff;
+            background-color: #1e293b;
+        }
+
+        /* Main Content Wrapper */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+        }
+
+        /* Header Navbar */
+        .top-navbar {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 2rem;
+        }
+
+        /* Modern Dashboard Cards */
+        .dashboard-card {
+            background: #ffffff;
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card-header-custom {
+            background: #ffffff;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-header-custom h5 {
+            margin: 0;
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.1rem;
+        }
+
+        /* Metric Summary Widget Cards */
+        .metric-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+        }
+
+        /* Table Design */
+        .table {
+            margin-bottom: 0;
+            vertical-align: middle;
+        }
+
+        .table th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 0.825rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .table td {
+            padding: 14px 16px;
+            color: #334155;
+            font-size: 0.925rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        /* Action Buttons */
+        .btn-action {
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* M9: AI Assistant Floating Widget UI */
+        .ai-chat-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 1000;
+            border-radius: 50px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .ai-chat-card {
+            position: fixed;
+            bottom: 85px;
+            right: 25px;
+            width: 350px;
+            height: 450px;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            border-radius: 12px;
+        }
+
+        .chat-body {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f8fafc;
+        }
+
+        .chat-bubble {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-size: 0.875rem;
+        }
+
+        .chat-user {
+            background: #0d6efd;
+            color: #fff;
+            margin-left: auto;
+        }
+
+        .chat-ai {
+            background: #e2e8f0;
+            color: #0f172a;
+            margin-right: auto;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .main-wrapper { margin-left: 0; padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- સાઇડબાર નેવિગેશન -->
+    <aside class="sidebar">
+        <div class="d-flex align-items-center gap-2 mb-4 px-2">
+            <i class="bi bi-shield-check text-primary fs-3"></i>
+            <span class="fs-4 fw-bold text-white">ProctorPlus</span>
+        </div>
+
+        <nav class="nav flex-column">
+            <a class="nav-link active" href="#dashboard"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+            <a class="nav-link" href="#schedule-meeting"><i class="bi bi-calendar-plus"></i> Schedule Meeting</a>
+            <a class="nav-link" href="#pending-approvals"><i class="bi bi-person-check"></i> Pending Approvals</a>
+            <a class="nav-link" href="#leave-requests"><i class="bi bi-file-earmark-text"></i> Leave Requests</a>
+            <a class="nav-link" href="#student-issues"><i class="bi bi-exclamation-triangle"></i> Student Tickets</a>
+            <a class="nav-link" href="#master-list"><i class="bi bi-people-fill"></i> Approved Master List</a>
+            <a class="nav-link" href="javascript:void(0)" onclick="toggleAIChat()"><i class="bi bi-robot"></i> AI Assistant (M9)</a>
+        </nav>
+    </aside>
+
+    <!-- મેઈન કન્ટેન્ટ એરિયા -->
+    <div class="main-wrapper">
+        
+        <!-- ટોપ નેવિગેશન હેડર -->
+        <header class="top-navbar d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="mb-1 fw-bold text-dark">Proctor Dashboard</h3>
+                <p class="text-muted mb-0 small"><i class="bi bi-person-badge me-1"></i> Jiya Patel - 25012022018 | Proctor Management System</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <button onclick="loadAllData()" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Refresh Data
+                </button>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold">
+                    <i class="bi bi-circle-fill text-success fs-6 me-1"></i> System Online
+                </span>
+            </div>
+        </header>
+
+        <!-- Quick Summary Metrics Widgets -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-icon bg-warning-subtle text-warning"><i class="bi bi-clock-history"></i></div>
+                    <div>
+                        <div class="text-muted small fw-semibold">Pending Approvals</div>
+                        <h4 class="mb-0 fw-bold text-dark" id="stat-pending">--</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-icon bg-info-subtle text-info"><i class="bi bi-card-checklist"></i></div>
+                    <div>
+                        <div class="text-muted small fw-semibold">Leave Requests</div>
+                        <h4 class="mb-0 fw-bold text-dark" id="stat-leaves">--</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-icon bg-danger-subtle text-danger"><i class="bi bi-bug"></i></div>
+                    <div>
+                        <div class="text-muted small fw-semibold">Open Issues</div>
+                        <h4 class="mb-0 fw-bold text-dark" id="stat-issues">--</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-icon bg-success-subtle text-success"><i class="bi bi-people"></i></div>
+                    <div>
+                        <div class="text-muted small fw-semibold">Approved Students</div>
+                        <h4 class="mb-0 fw-bold text-dark" id="stat-approved">--</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ૧. નવી મીટીંગ શેડ્યૂલ કરવા માટેનું ફોર્મ -->
+        <section id="schedule-meeting" class="dashboard-card p-4">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-calendar-event fs-5 text-primary"></i>
+                <h5 class="fw-bold mb-0 text-dark">Schedule / Record Counselling Meeting</h5>
+            </div>
+            <form id="meeting-form" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Enrollment Number</label>
+                    <input type="text" id="m-eno" class="form-control" placeholder="e.g. 25012022018" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Meeting Date</label>
+                    <input type="date" id="m-date" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Meeting Topic</label>
+                    <input type="text" id="m-topic" class="form-control" placeholder="Topic name" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Remarks / Notes</label>
+                    <input type="text" id="m-remarks" class="form-control" placeholder="Enter remarks" required>
+                </div>
+                <div class="col-12 mt-3">
+                    <button type="submit" class="btn btn-dark w-100 py-2 fw-semibold">
+                        <i class="bi bi-save me-1"></i> Save Meeting Record
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- ૨. પેન્ડિંગ સ્ટુડન્ટ રજીસ્ટ્રેશન અપ્રૂવલ -->
+        <section id="pending-approvals" class="dashboard-card">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-person-exclamation me-2 text-warning"></i>Pending Student Approvals</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Enrollment No</th>
+                            <th>Name</th>
+                            <th>Branch</th>
+                            <th>Email</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pending-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ૩. રજાની અરજીઓ (Leave Requests) -->
+        <section id="leave-requests" class="dashboard-card">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-envelope-paper me-2 text-info"></i>Leave Requests</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Enrollment No</th>
+                            <th>From Date</th>
+                            <th>To Date</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leave-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ૪. વિદ્યાર્થીઓની સમસ્યાઓ (Student Issues / Tickets) -->
+        <section id="student-issues" class="dashboard-card">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-ticket-detailed me-2 text-danger"></i>Student Issues / Tickets</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Enrollment No</th>
+                            <th>Category</th>
+                            <th>Priority</th>
+                            <th>Description</th>
+                            <th>Proctor Reply</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="issue-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ૫. કાઉન્સેલિંગ મીટીંગ્સ લિસ્ટ -->
+        <section class="dashboard-card">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-journals me-2 text-success"></i>Counselling & Meeting Records</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Enrollment No</th>
+                            <th>Date</th>
+                            <th>Topic</th>
+                            <th>Remarks</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="meeting-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ૬. ફાઇનલ એપ્રૂવ્ડ સ્ટુડન્ટ્સ માસ્ટર લિસ્ટ (M10: CSV Import/Export સાથે) -->
+        <section id="master-list" class="dashboard-card">
+            <div class="card-header-custom bg-dark text-white rounded-top">
+                <h5 class="text-white"><i class="bi bi-mortarboard me-2"></i>Approved Students Master List</h5>
+                <!-- M10 CSV Tools Buttons -->
+                <div class="d-flex gap-2">
+                    <input type="file" id="csv-file-input" accept=".csv" class="d-none" onchange="uploadCSV(event)">
+                    <button class="btn btn-sm btn-outline-light" onclick="document.getElementById('csv-file-input').click()">
+                        <i class="bi bi-file-earmark-arrow-up me-1"></i> Import CSV
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="exportCSV()">
+                        <i class="bi bi-file-earmark-arrow-down me-1"></i> Export CSV
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Enrollment No</th>
+                            <th>Name</th>
+                            <th>Branch</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="master-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- M9: AI Assistant Floating Widget -->
+    <button class="btn btn-primary ai-chat-btn" onclick="toggleAIChat()">
+        <i class="bi bi-robot me-1"></i> Ask AI
+    </button>
+
+    <div class="card ai-chat-card" id="ai-chat-widget">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="bi bi-robot me-2"></i>Proctor AI Assistant</span>
+            <button type="button" class="btn-close btn-close-white" onclick="toggleAIChat()"></button>
+        </div>
+        <div class="chat-body" id="chat-messages">
+            <div class="chat-bubble chat-ai">
+                Hello Proctor! I am your AI assistant. How can I help you today?
+            </div>
+        </div>
+        <div class="card-footer bg-white p-2">
+            <div class="input-group">
+                <input type="text" id="ai-input" class="form-control form-control-sm" placeholder="Ask AI..." onkeypress="if(event.key==='Enter') sendAIMessage()">
+                <button class="btn btn-primary btn-sm" onclick="sendAIMessage()"><i class="bi bi-send"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reply Modal for Issues -->
+    <div class="modal fade" id="replyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-reply-fill text-primary me-2"></i>Reply to Student Issue</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="reply-issue-id">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Enter Resolution / Reply Message:</label>
+                        <textarea id="reply-text" class="form-control" rows="4" placeholder="Write your response here..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitReply()">Submit Reply & Resolve</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- API Logic Script -->
+    <script>
+        const API_URL = 'http://127.0.0.1:8000';
+        let replyModalObj = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            replyModalObj = new bootstrap.Modal(document.getElementById('replyModal'));
+        });
+
+        async function loadAllData() {
+            try {
+                // ૧. Load Pending Students
+                const resPending = await fetch(`${API_URL}/api/students/pending`);
+                const pendingData = await resPending.json();
+                document.getElementById('stat-pending').innerText = pendingData.length || 0;
+                
+                const pendingBody = document.getElementById('pending-table-body');
+                pendingBody.innerHTML = pendingData.length ? '' : '<tr><td colspan="5" class="text-center text-muted py-3">No pending approvals</td></tr>';
+                pendingData.forEach(s => {
+                    pendingBody.innerHTML += `<tr>
+                        <td class="fw-semibold">${s.enrollment}</td>
+                        <td>${s.name}</td>
+                        <td>${s.branch || '-'}</td>
+                        <td>${s.email || '-'}</td>
+                        <td class="text-end">
+                            <button class="btn btn-success btn-action" onclick="approveStudent('${s.enrollment}')">
+                                <i class="bi bi-check-circle me-1"></i> Approve
+                            </button>
+                        </td>
+                    </tr>`;
+                });
+
+                // ૨. Load Leave Requests
+                const resLeave = await fetch(`${API_URL}/api/leaves`);
+                const leaveData = await resLeave.json();
+                document.getElementById('stat-leaves').innerText = leaveData.length || 0;
+
+                const leaveBody = document.getElementById('leave-table-body');
+                leaveBody.innerHTML = leaveData.length ? '' : '<tr><td colspan="5" class="text-center text-muted py-3">No leave requests found</td></tr>';
+                leaveData.forEach(l => {
+                    leaveBody.innerHTML += `<tr>
+                        <td class="fw-semibold">${l.enrollment}</td>
+                        <td>${l.from_date}</td>
+                        <td>${l.to_date}</td>
+                        <td>${l.reason}</td>
+                        <td><span class="badge bg-${l.status === 'Approved' ? 'success' : l.status === 'Rejected' ? 'danger' : 'warning'} px-2 py-1">${l.status}</span></td>
+                    </tr>`;
+                });
+
+                // ૩. Load Issues
+                const resIssue = await fetch(`${API_URL}/api/issues`);
+                const issueData = await resIssue.json();
+                const openIssues = issueData.filter(i => i.status === 'Open');
+                document.getElementById('stat-issues').innerText = openIssues.length || 0;
+
+                const issueBody = document.getElementById('issue-table-body');
+                issueBody.innerHTML = issueData.length ? '' : '<tr><td colspan="7" class="text-center text-muted py-3">No open issues</td></tr>';
+                
+                issueData.forEach(i => {
+                    issueBody.innerHTML += `<tr>
+                        <td class="fw-semibold">${i.enrollment}</td>
+                        <td>${i.category}</td>
+                        <td><span class="badge bg-${i.priority === 'High' ? 'danger' : i.priority === 'Medium' ? 'warning' : 'info'} text-dark">${i.priority}</span></td>
+                        <td>${i.description}</td>
+                        <td><small class="text-muted">${i.reply || '<i>No reply yet</i>'}</small></td>
+                        <td><span class="badge bg-${i.status === 'Resolved' ? 'success' : 'secondary'} px-2 py-1">${i.status}</span></td>
+                        <td class="text-end">
+                            <div class="btn-group" role="group">
+                                ${i.status !== 'Resolved' ? `
+                                    <button class="btn btn-outline-primary btn-action" onclick="openReplyModal(${i.id})">
+                                        <i class="bi bi-reply me-1"></i> Reply
+                                    </button>
+                                ` : ''}
+                                <button class="btn btn-outline-danger btn-action" onclick="deleteIssue(${i.id})">
+                                    <i class="bi bi-trash me-1"></i> Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>`;
+                });
+
+                // ૪. Load Meetings
+                try {
+                    const resMeeting = await fetch(`${API_URL}/meetings/`);
+                    if(resMeeting.ok) {
+                        const meetingData = await resMeeting.json();
+                        const meetingBody = document.getElementById('meeting-table-body');
+                        meetingBody.innerHTML = meetingData.length ? '' : '<tr><td colspan="5" class="text-center text-muted py-3">No meetings recorded</td></tr>';
+                        meetingData.forEach(m => {
+                            meetingBody.innerHTML += `<tr>
+                                <td class="fw-semibold">${m.enrollment_no}</td>
+                                <td>${m.meeting_date}</td>
+                                <td>${m.topic}</td>
+                                <td>${m.remarks}</td>
+                                <td><span class="badge bg-${m.status === 'Completed' ? 'success' : 'info'} px-2 py-1">${m.status}</span></td>
+                            </tr>`;
+                        });
+                    }
+                } catch(e) {
+                    document.getElementById('meeting-table-body').innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Meeting API not configured</td></tr>';
+                }
+
+                // ૫. Load Master Students List
+                const resMaster = await fetch(`${API_URL}/api/students/approved`);
+                const masterData = await resMaster.json();
+                document.getElementById('stat-approved').innerText = masterData.length || 0;
+
+                const masterBody = document.getElementById('master-table-body');
+                masterBody.innerHTML = masterData.length ? '' : '<tr><td colspan="6" class="text-center text-muted py-3">No approved students yet</td></tr>';
+                masterData.forEach(s => {
+                    masterBody.innerHTML += `<tr>
+                        <td class="fw-semibold">${s.enrollment}</td>
+                        <td>${s.name}</td>
+                        <td>${s.branch || '-'}</td>
+                        <td>${s.email || '-'}</td>
+                        <td><span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="bi bi-check2"></i> ${s.status}</span></td>
+                        <td class="text-end">
+                            <button class="btn btn-outline-danger btn-action" onclick="removeStudent('${s.enrollment}')">
+                                <i class="bi bi-trash me-1"></i> Remove
+                            </button>
+                        </td>
+                    </tr>`;
+                });
+
+            } catch (err) {
+                console.error("Error loading dashboard data:", err);
+            }
+        }
+
+        // M10: CSV Upload Functionality
+        async function uploadCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_URL}/api/students/import-csv`, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.ok) {
+                    alert('CSV Imported successfully!');
+                    loadAllData();
+                } else {
+                    alert('Failed to import CSV file.');
+                }
+            } catch (err) {
+                console.error("CSV Upload error:", err);
+            }
+        }
+
+        // M10: CSV Export Functionality
+        function exportCSV() {
+            window.open(`${API_URL}/api/students/export-csv`, '_blank');
+        }
+
+        // M9: AI Assistant Toggle & Chat Logic
+        function toggleAIChat() {
+            const widget = document.getElementById('ai-chat-widget');
+            widget.style.display = (widget.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        async function sendAIMessage() {
+            const input = document.getElementById('ai-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML += `<div class="chat-bubble chat-user">${message}</div>`;
+            input.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const response = await fetch(`${API_URL}/api/ai-assistant`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: message })
+                });
+                const data = await response.json();
+                const reply = data.response || "Sorry, I couldn't process your request.";
+                
+                chatMessages.innerHTML += `<div class="chat-bubble chat-ai">${reply}</div>`;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch (err) {
+                chatMessages.innerHTML += `<div class="chat-bubble chat-ai text-danger">Error connecting to AI service.</div>`;
+            }
+        }
+
+        // Approved Student Remove Function
+        async function removeStudent(enrollment) {
+            if (confirm("Are you sure you want to remove this student from the master list?")) {
+                try {
+                    const response = await fetch(`${API_URL}/api/students/approved/${enrollment}`, {
+                        method: 'DELETE'
+                    });
+                    if (response.ok) {
+                        alert("Student removed successfully!");
+                        loadAllData();
+                    } else {
+                        alert("Failed to remove student.");
+                    }
+                } catch (err) {
+                    console.error("Error removing student:", err);
+                }
+            }
+        }
+
+        // Delete Issue Function
+        async function deleteIssue(issueId) {
+            if (confirm("Are you sure you want to delete this issue?")) {
+                try {
+                    const response = await fetch(`${API_URL}/api/issues/${issueId}`, {
+                        method: 'DELETE'
+                    });
+                    if (response.ok) {
+                        alert("Issue deleted successfully!");
+                        loadAllData();
+                    } else {
+                        alert("Failed to delete issue.");
+                    }
+                } catch (err) {
+                    console.error("Error deleting issue:", err);
+                }
+            }
+        }
+
+        // Handle Meeting Form Submit
+        document.getElementById('meeting-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const payload = {
+                enrollment_no: document.getElementById('m-eno').value,
+                meeting_date: document.getElementById('m-date').value,
+                topic: document.getElementById('m-topic').value,
+                remarks: document.getElementById('m-remarks').value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/meetings/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if(response.ok) {
+                    alert('Meeting recorded successfully!');
+                    document.getElementById('meeting-form').reset();
+                    loadAllData();
+                } else {
+                    alert('Failed to save meeting record.');
+                }
+            } catch(err) {
+                console.error("Error:", err);
+            }
+        });
+
+        // Approve Student Function
+        async function approveStudent(enrollment) {
+            try {
+                const response = await fetch(`${API_URL}/api/students/approve/${enrollment}`, { 
+                    method: 'POST' 
+                });
+                if(response.ok) {
+                    alert('Student approved successfully!');
+                    loadAllData();
+                } else {
+                    alert('Failed to approve student.');
+                }
+            } catch(err) {
+                console.error("Error:", err);
+            }
+        }
+
+        // Open Reply Modal
+        function openReplyModal(issueId) {
+            document.getElementById('reply-issue-id').value = issueId;
+            document.getElementById('reply-text').value = '';
+            replyModalObj.show();
+        }
+
+        // Submit Reply
+        async function submitReply() {
+            const issueId = document.getElementById('reply-issue-id').value;
+            const replyText = document.getElementById('reply-text').value;
+
+            if(!replyText.trim()) {
+                alert("Please enter a reply message.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/issues/reply/${issueId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reply: replyText })
+                });
+
+                if(response.ok) {
+                    alert('Reply submitted & Issue resolved successfully!');
+                    replyModalObj.hide();
+                    loadAllData();
+                } else {
+                    alert('Failed to submit reply.');
+                }
+            } catch(err) {
+                console.error("Error:", err);
+            }
+        }
+
+        loadAllData();
+    </script>
+</body>
+</html>

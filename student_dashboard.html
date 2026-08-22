@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - ProctorPlus</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 min-h-screen text-white p-6">
+
+    <div class="max-w-5xl mx-auto">
+        <!-- Top Navigation Bar -->
+        <div class="flex justify-between items-center bg-white/10 backdrop-blur-xl border border-white/20 p-6 rounded-2xl shadow-xl mb-6">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">Student Portal Dashboard</h1>
+                <p class="text-xs text-indigo-300 mt-1">Welcome back, <span id="student-name">Student</span> (<span id="student-eno-display">Loading...</span>)</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="toggleAIChat()" class="px-4 py-2 bg-indigo-600/80 hover:bg-indigo-600 rounded-lg text-xs font-medium transition-colors shadow-md flex items-center gap-1">
+                    🤖 Ask AI
+                </button>
+                <a href="index.html" class="px-4 py-2 bg-red-600/80 hover:bg-red-600 rounded-lg text-xs font-medium transition-colors shadow-md">
+                    Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Grid Content: Profile & Apply Leave -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Leave Request Card (M3) -->
+            <div class="bg-white/10 backdrop-blur-xl border border-white/20 p-6 rounded-2xl shadow-xl">
+                <h3 class="text-lg font-semibold mb-3 text-indigo-300">Apply for Leave (M3)</h3>
+                <form id="leave-form" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">From Date</label>
+                        <input type="date" id="from-date" class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">To Date</label>
+                        <input type="date" id="to-date" class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Reason</label>
+                        <textarea id="reason" rows="2" placeholder="State reason for leave..." class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500" required></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg font-medium text-sm transition-colors shadow-md">
+                        Submit Leave Request
+                    </button>
+                    <div id="leave-msg" class="text-xs text-center font-medium"></div>
+                </form>
+            </div>
+
+            <!-- Student Info Card -->
+            <div class="bg-white/10 backdrop-blur-xl border border-white/20 p-6 rounded-2xl shadow-xl flex flex-col justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold mb-3 text-indigo-300">My Profile Info</h3>
+                    <div class="space-y-2 text-sm text-slate-300">
+                        <p><strong>Enrollment:</strong> <span id="info-eno">-</span></p>
+                        <p><strong>Full Name:</strong> <span id="info-name">-</span></p>
+                        <p><strong>Branch:</strong> <span id="info-branch">-</span></p>
+                        <p><strong>Email:</strong> <span id="info-email">-</span></p>
+                        <p><strong>Status:</strong> <span class="text-green-400 font-semibold">Approved & Active</span></p>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-white/10 text-center text-xs text-slate-400">
+                    ProctorPlus System &bull; Jiya Patel - 25012022018
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Raise Issue Card (M4) -->
+        <div class="bg-white/10 backdrop-blur-xl border border-white/20 p-6 rounded-2xl shadow-xl mt-6">
+            <h3 class="text-lg font-semibold mb-3 text-indigo-300">Raise Student Issue / Complaint (M4)</h3>
+            <form id="issue-form" class="space-y-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Category</label>
+                        <select id="issue-category" class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500" required>
+                            <option value="" disabled selected>Select Category</option>
+                            <option value="Academic">Academic</option>
+                            <option value="Technical">Technical</option>
+                            <option value="Personal">Personal</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Priority</label>
+                        <select id="issue-priority" class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500" required>
+                            <option value="Low">Low</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Description</label>
+                    <textarea id="issue-description" rows="2" placeholder="Describe your issue in detail..." class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500" required></textarea>
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg font-medium text-sm transition-colors shadow-md">
+                    Raise Issue
+                </button>
+                <div id="issue-msg" class="text-xs text-center font-medium"></div>
+            </form>
+        </div>
+
+        <!-- My Raised Issues & Status List -->
+        <div class="bg-white/10 backdrop-blur-xl border border-white/20 p-6 rounded-2xl shadow-xl mt-6">
+            <h3 class="text-lg font-semibold mb-3 text-indigo-300">My Ticket Responses & Status</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-black/40 text-slate-200 uppercase text-[10px] tracking-wider">
+                        <tr>
+                            <th class="p-3">Category</th>
+                            <th class="p-3">Description</th>
+                            <th class="p-3">Status</th>
+                            <th class="p-3">Proctor Reply</th>
+                        </tr>
+                    </thead>
+                    <tbody id="my-issues-body" class="divide-y divide-white/10">
+                        <tr><td colspan="4" class="p-3 text-center text-slate-400">Loading issues...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- M9: AI Assistant Floating Widget -->
+    <div id="ai-widget" class="fixed bottom-6 right-6 w-80 bg-slate-900 border border-white/20 rounded-2xl shadow-2xl hidden flex-col overflow-hidden z-50">
+        <div class="bg-indigo-600 p-3 flex justify-between items-center text-sm font-semibold">
+            <span>🤖 AI Assistant (M9)</span>
+            <button onclick="toggleAIChat()" class="text-slate-200 hover:text-white font-bold">✕</button>
+        </div>
+        <div id="chat-messages" class="p-3 h-64 overflow-y-auto space-y-2 text-xs">
+            <div class="bg-indigo-900/60 p-2.5 rounded-lg max-w-[85%]">
+                Hello! How can I assist you with your queries today?
+            </div>
+        </div>
+        <div class="p-2 bg-black/40 border-t border-white/10 flex gap-1">
+            <input type="text" id="ai-input" placeholder="Ask AI..." class="w-full bg-black/50 border border-white/20 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none" onkeypress="if(event.key==='Enter') sendAIMessage()">
+            <button onclick="sendAIMessage()" class="bg-indigo-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-indigo-500">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000';
+
+        // URL mathi Enrollment number fetch karvo
+        const urlParams = new URLSearchParams(window.location.search);
+        const eno = urlParams.get('eno');
+
+        if (!eno) {
+            alert('Unauthorized access! Please login first.');
+            window.location.href = 'index.html';
+        }
+
+        // Student details & issues load karva
+        async function loadStudentData() {
+            try {
+                // 1. Get Info
+                const res = await fetch(`${API_URL}/api/students/approved`);
+                const students = await res.json();
+                const student = students.find(s => s.enrollment === eno);
+
+                if (student) {
+                    document.getElementById('student-name').innerText = student.name;
+                    document.getElementById('student-eno-display').innerText = student.enrollment;
+                    document.getElementById('info-eno').innerText = student.enrollment;
+                    document.getElementById('info-name').innerText = student.name;
+                    document.getElementById('info-branch').innerText = student.branch;
+                    document.getElementById('info-email').innerText = student.email;
+                }
+
+                // 2. Load Raised Issues Status
+                const issueRes = await fetch(`${API_URL}/api/issues`);
+                const allIssues = await issueRes.json();
+                const myIssues = allIssues.filter(i => i.enrollment === eno);
+
+                const issuesBody = document.getElementById('my-issues-body');
+                issuesBody.innerHTML = myIssues.length ? '' : '<tr><td colspan="4" class="p-3 text-center text-slate-400">No issues raised yet.</td></tr>';
+
+                myIssues.forEach(i => {
+                    issuesBody.innerHTML += `
+                        <tr>
+                            <td class="p-3 font-medium text-white">${i.category}</td>
+                            <td class="p-3">${i.description}</td>
+                            <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${i.status === 'Resolved' ? 'bg-green-500/20 text-green-300' : 'bg-yellow-500/20 text-yellow-300'}">${i.status}</span></td>
+                            <td class="p-3 text-indigo-300">${i.reply || '<i>Awaiting reply...</i>'}</td>
+                        </tr>
+                    `;
+                });
+
+            } catch (err) {
+                console.error('Error fetching student data:', err);
+            }
+        }
+
+        loadStudentData();
+
+        // Leave Form Submission (M3)
+        document.getElementById('leave-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const msgDiv = document.getElementById('leave-msg');
+
+            const leaveData = {
+                enrollment: eno,
+                from_date: document.getElementById('from-date').value,
+                to_date: document.getElementById('to-date').value,
+                reason: document.getElementById('reason').value
+            };
+
+            try {
+                msgDiv.className = "text-xs mt-2 text-center text-indigo-300";
+                msgDiv.innerText = "Submitting leave application...";
+
+                const response = await fetch(`${API_URL}/api/leaves`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(leaveData)
+                });
+
+                if (response.ok) {
+                    msgDiv.className = "text-xs mt-2 text-center text-green-400";
+                    msgDiv.innerText = "Leave request sent successfully!";
+                    document.getElementById('leave-form').reset();
+                } else {
+                    msgDiv.className = "text-xs mt-2 text-center text-amber-400";
+                    msgDiv.innerText = "Failed to submit leave request.";
+                }
+            } catch (err) {
+                msgDiv.className = "text-xs mt-2 text-center text-red-400";
+                msgDiv.innerText = "Server connection error.";
+            }
+        });
+
+        // Issue Form Submission (M4)
+        document.getElementById('issue-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const msgDiv = document.getElementById('issue-msg');
+
+            const issueData = {
+                enrollment: eno,
+                category: document.getElementById('issue-category').value,
+                priority: document.getElementById('issue-priority').value,
+                description: document.getElementById('issue-description').value
+            };
+
+            try {
+                msgDiv.className = "text-xs mt-2 text-center text-indigo-300";
+                msgDiv.innerText = "Submitting issue...";
+
+                const response = await fetch(`${API_URL}/api/issues`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(issueData)
+                });
+
+                if (response.ok) {
+                    msgDiv.className = "text-xs mt-2 text-center text-green-400";
+                    msgDiv.innerText = "Issue raised successfully!";
+                    document.getElementById('issue-form').reset();
+                    loadStudentData();
+                } else {
+                    msgDiv.className = "text-xs mt-2 text-center text-amber-400";
+                    msgDiv.innerText = "Failed to raise issue.";
+                }
+            } catch (err) {
+                msgDiv.className = "text-xs mt-2 text-center text-red-400";
+                msgDiv.innerText = "Server connection error.";
+            }
+        });
+
+        // M9: AI Assistant Toggle & Chat Logic
+        function toggleAIChat() {
+            const widget = document.getElementById('ai-widget');
+            widget.classList.toggle('hidden');
+            widget.classList.toggle('flex');
+        }
+
+        async function sendAIMessage() {
+            const input = document.getElementById('ai-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML += `<div class="bg-indigo-600/50 p-2.5 rounded-lg max-w-[85%] ml-auto text-right">${message}</div>`;
+            input.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const response = await fetch(`${API_URL}/api/ai-assistant`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: message })
+                });
+                const data = await response.json();
+                const reply = data.response || "Sorry, I couldn't understand that.";
+
+                chatMessages.innerHTML += `<div class="bg-indigo-900/60 p-2.5 rounded-lg max-w-[85%]">${reply}</div>`;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch (err) {
+                chatMessages.innerHTML += `<div class="bg-red-900/50 p-2.5 rounded-lg text-red-300">AI service unavailable.</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
