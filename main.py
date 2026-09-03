@@ -4,12 +4,17 @@ from pydantic import BaseModel
 import sqlite3
 import csv
 import io
+import os
 
 app = FastAPI(title="ProctorPlus API - Jiya Patel 25012022018")
 
+# ==========================================
+# CORS Middleware (GitHub Pages માટે)
+# ==========================================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # GitHub Pages અને લોકલ બંનેમાંથી રિક્વેસ્ટ એક્સેપ્ટ કરશે
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -454,4 +459,5 @@ async def import_students_csv(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
