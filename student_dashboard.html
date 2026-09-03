@@ -33,7 +33,7 @@
         <!-- Grid Content: Profile & Apply Leave -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            <!-- Leave Request Card (M3) -->
+            <!-- Leave Request Card -->
             <div class="bg-white/10 backdrop-blur-xl border border-white/20 p-6 rounded-2xl shadow-xl">
                 <h3 class="text-lg font-semibold mb-3 text-indigo-300">Apply for Leave (M3)</h3>
                 <form id="leave-form" class="space-y-3">
@@ -76,7 +76,7 @@
 
         </div>
 
-        <!-- Raise Issue Card (M4) -->
+        <!-- Raise Issue Card -->
         <div class="bg-white/10 backdrop-blur-xl border border-white/20 p-6 rounded-2xl shadow-xl mt-6">
             <h3 class="text-lg font-semibold mb-3 text-indigo-300">Raise Student Issue / Complaint (M4)</h3>
             <form id="issue-form" class="space-y-3">
@@ -133,7 +133,7 @@
 
     </div>
 
-    <!-- M9: AI Assistant Floating Widget -->
+    <!-- : AI Assistant Floating Widget -->
     <div id="ai-widget" class="fixed bottom-6 right-6 w-80 bg-slate-900 border border-white/20 rounded-2xl shadow-2xl hidden flex-col overflow-hidden z-50">
         <div class="bg-indigo-600 p-3 flex justify-between items-center text-sm font-semibold">
             <span>🤖 AI Assistant (M9)</span>
@@ -205,7 +205,7 @@
 
         loadStudentData();
 
-        // Leave Form Submission (M3)
+        // Leave Form Submission 
         document.getElementById('leave-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const msgDiv = document.getElementById('leave-msg');
@@ -241,7 +241,7 @@
             }
         });
 
-        // Issue Form Submission (M4)
+        // Issue Form Submission
         document.getElementById('issue-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const msgDiv = document.getElementById('issue-msg');
@@ -278,7 +278,7 @@
             }
         });
 
-        // M9: AI Assistant Toggle & Chat Logic
+        // : AI Assistant Toggle & Chat Logic
         function toggleAIChat() {
             const widget = document.getElementById('ai-widget');
             widget.classList.toggle('hidden');
