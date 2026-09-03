@@ -151,6 +151,12 @@
     </div>
 
     <script>
+        // Automatic cleanup for cached elements
+        document.body.innerHTML = document.body.innerHTML
+            .replace(/\(M3\)/g, '')
+            .replace(/\(M4\)/g, '')
+            .replace(/\(M9\)/g, '');
+
         const API_URL = 'http://127.0.0.1:8000';
 
         // URL mathi Enrollment number fetch karvo
@@ -313,3 +319,4 @@
     </script>
 </body>
 </html>
+        
