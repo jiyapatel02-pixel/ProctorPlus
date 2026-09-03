@@ -151,13 +151,7 @@
     </div>
 
     <script>
-        // Automatic cleanup for cached elements
-        document.body.innerHTML = document.body.innerHTML
-            .replace(/\(M3\)/g, '')
-            .replace(/\(M4\)/g, '')
-            .replace(/\(M9\)/g, '');
-
-        const API_URL = 'http://127.0.0.1:8000';
+        const API_URL = 'https://proctorplus-hyim.onrender.com';
 
         // URL mathi Enrollment number fetch karvo
         const urlParams = new URLSearchParams(window.location.search);
@@ -319,4 +313,3 @@
     </script>
 </body>
 </html>
-        
