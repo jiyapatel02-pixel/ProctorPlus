@@ -400,11 +400,10 @@
             </div>
         </section>
 
-        <!-- ૬. ફાઇનલ એપ્રૂવ્ડ સ્ટુડન્ટ્સ માસ્ટર લિસ્ટ (M10: CSV Import/Export સાથે) -->
+        <!-- ૬. ફાઇનલ એપ્રૂવ્ડ સ્ટુડન્ટ્સ માસ્ટર લિસ્ટ -->
         <section id="master-list" class="dashboard-card">
             <div class="card-header-custom bg-dark text-white rounded-top">
                 <h5 class="text-white"><i class="bi bi-mortarboard me-2"></i>Approved Students Master List</h5>
-                <!-- M10 CSV Tools Buttons -->
                 <div class="d-flex gap-2">
                     <input type="file" id="csv-file-input" accept=".csv" class="d-none" onchange="uploadCSV(event)">
                     <button class="btn btn-sm btn-outline-light" onclick="document.getElementById('csv-file-input').click()">
@@ -483,13 +482,14 @@
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- API Logic Script -->
+    <!-- API Logic Script with LocalStorage Fallback -->
     <script>
         const API_URL = 'http://127.0.0.1:8000';
         let replyModalObj = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             replyModalObj = new bootstrap.Modal(document.getElementById('replyModal'));
+            loadAllData();
         });
 
         async function loadAllData() {
@@ -540,7 +540,6 @@
 
                 const issueBody = document.getElementById('issue-table-body');
                 issueBody.innerHTML = issueData.length ? '' : '<tr><td colspan="7" class="text-center text-muted py-3">No open issues</td></tr>';
-                
                 issueData.forEach(i => {
                     issueBody.innerHTML += `<tr>
                         <td class="fw-semibold">${i.enrollment}</td>
@@ -564,26 +563,31 @@
                     </tr>`;
                 });
 
-                // ૪. Load Meetings
+                // ૪. Load Meetings (Backend + LocalStorage Fallback)
+                let meetingData = [];
                 try {
                     const resMeeting = await fetch(`${API_URL}/meetings/`);
                     if(resMeeting.ok) {
-                        const meetingData = await resMeeting.json();
-                        const meetingBody = document.getElementById('meeting-table-body');
-                        meetingBody.innerHTML = meetingData.length ? '' : '<tr><td colspan="5" class="text-center text-muted py-3">No meetings recorded</td></tr>';
-                        meetingData.forEach(m => {
-                            meetingBody.innerHTML += `<tr>
-                                <td class="fw-semibold">${m.enrollment_no}</td>
-                                <td>${m.meeting_date}</td>
-                                <td>${m.topic}</td>
-                                <td>${m.remarks}</td>
-                                <td><span class="badge bg-${m.status === 'Completed' ? 'success' : 'info'} px-2 py-1">${m.status}</span></td>
-                            </tr>`;
-                        });
+                        meetingData = await resMeeting.json();
                     }
                 } catch(e) {
-                    document.getElementById('meeting-table-body').innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Meeting API not configured</td></tr>';
+                    console.warn("Backend meetings API offline, loading local storage.");
                 }
+
+                const localMeetings = JSON.parse(localStorage.getItem('proctor_meetings')) || [];
+                const combinedMeetings = [...meetingData, ...localMeetings];
+
+                const meetingBody = document.getElementById('meeting-table-body');
+                meetingBody.innerHTML = combinedMeetings.length ? '' : '<tr><td colspan="5" class="text-center text-muted py-3">No meetings recorded</td></tr>';
+                combinedMeetings.forEach(m => {
+                    meetingBody.innerHTML += `<tr>
+                        <td class="fw-semibold">${m.enrollment_no}</td>
+                        <td>${m.meeting_date}</td>
+                        <td>${m.topic}</td>
+                        <td>${m.remarks}</td>
+                        <td><span class="badge bg-success px-2 py-1">${m.status || 'Completed'}</span></td>
+                    </tr>`;
+                });
 
                 // ૫. Load Master Students List
                 const resMaster = await fetch(`${API_URL}/api/students/approved`);
@@ -609,6 +613,97 @@
 
             } catch (err) {
                 console.error("Error loading dashboard data:", err);
+            }
+        }
+
+        // Handle Meeting Form Submit with LocalStorage Backup
+        document.getElementById('meeting-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const payload = {
+                enrollment_no: document.getElementById('m-eno').value,
+                meeting_date: document.getElementById('m-date').value,
+                topic: document.getElementById('m-topic').value,
+                remarks: document.getElementById('m-remarks').value,
+                status: 'Completed'
+            };
+
+            // સેવ કરવા માટે લોકલ સ્ટોરેજમાં એડ કરો
+            let localMeetings = JSON.parse(localStorage.getItem('proctor_meetings')) || [];
+            localMeetings.push(payload);
+            localStorage.setItem('proctor_meetings', JSON.stringify(localMeetings));
+
+            try {
+                const response = await fetch(`${API_URL}/meetings/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if(response.ok) {
+                    alert('Meeting recorded and synced successfully!');
+                } else {
+                    alert('Saved locally (Backend sync skipped).');
+                }
+            } catch(err) {
+                console.warn("Backend offline, data saved locally:", err);
+                alert('Meeting recorded locally!');
+            }
+
+            document.getElementById('meeting-form').reset();
+            loadAllData();
+        });
+
+        // Approved Student Remove Function
+        async function removeStudent(enrollment) {
+            if (confirm("Are you sure you want to remove this student from the master list?")) {
+                try {
+                    const response = await fetch(`${API_URL}/api/students/approved/${enrollment}`, {
+                        method: 'DELETE'
+                    });
+                    if (response.ok) {
+                        alert("Student removed successfully!");
+                        loadAllData();
+                    } else {
+                        alert("Failed to remove student.");
+                    }
+                } catch (err) {
+                    console.error("Error removing student:", err);
+                }
+            }
+        }
+
+        // Delete Issue Function
+        async function deleteIssue(issueId) {
+            if (confirm("Are you sure you want to delete this issue?")) {
+                try {
+                    const response = await fetch(`${API_URL}/api/issues/${issueId}`, {
+                        method: 'DELETE'
+                    });
+                    if (response.ok) {
+                        alert("Issue deleted successfully!");
+                        loadAllData();
+                    } else {
+                        alert("Failed to delete issue.");
+                    }
+                } catch (err) {
+                    console.error("Error deleting issue:", err);
+                }
+            }
+        }
+
+        // Approve Student Function
+        async function approveStudent(enrollment) {
+            try {
+                const response = await fetch(`${API_URL}/api/students/approve/${enrollment}`, { 
+                    method: 'POST' 
+                });
+                if(response.ok) {
+                    alert('Student approved successfully!');
+                    loadAllData();
+                } else {
+                    alert('Failed to approve student.');
+                }
+            } catch(err) {
+                console.error("Error:", err);
             }
         }
 
@@ -672,127 +767,6 @@
                 chatMessages.innerHTML += `<div class="chat-bubble chat-ai text-danger">Error connecting to AI service.</div>`;
             }
         }
-
-        // Approved Student Remove Function
-        async function removeStudent(enrollment) {
-            if (confirm("Are you sure you want to remove this student from the master list?")) {
-                try {
-                    const response = await fetch(`${API_URL}/api/students/approved/${enrollment}`, {
-                        method: 'DELETE'
-                    });
-                    if (response.ok) {
-                        alert("Student removed successfully!");
-                        loadAllData();
-                    } else {
-                        alert("Failed to remove student.");
-                    }
-                } catch (err) {
-                    console.error("Error removing student:", err);
-                }
-            }
-        }
-
-        // Delete Issue Function
-        async function deleteIssue(issueId) {
-            if (confirm("Are you sure you want to delete this issue?")) {
-                try {
-                    const response = await fetch(`${API_URL}/api/issues/${issueId}`, {
-                        method: 'DELETE'
-                    });
-                    if (response.ok) {
-                        alert("Issue deleted successfully!");
-                        loadAllData();
-                    } else {
-                        alert("Failed to delete issue.");
-                    }
-                } catch (err) {
-                    console.error("Error deleting issue:", err);
-                }
-            }
-        }
-
-        // Handle Meeting Form Submit
-        document.getElementById('meeting-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const payload = {
-                enrollment_no: document.getElementById('m-eno').value,
-                meeting_date: document.getElementById('m-date').value,
-                topic: document.getElementById('m-topic').value,
-                remarks: document.getElementById('m-remarks').value
-            };
-
-            try {
-                const response = await fetch(`${API_URL}/meetings/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if(response.ok) {
-                    alert('Meeting recorded successfully!');
-                    document.getElementById('meeting-form').reset();
-                    loadAllData();
-                } else {
-                    alert('Failed to save meeting record.');
-                }
-            } catch(err) {
-                console.error("Error:", err);
-            }
-        });
-
-        // Approve Student Function
-        async function approveStudent(enrollment) {
-            try {
-                const response = await fetch(`${API_URL}/api/students/approve/${enrollment}`, { 
-                    method: 'POST' 
-                });
-                if(response.ok) {
-                    alert('Student approved successfully!');
-                    loadAllData();
-                } else {
-                    alert('Failed to approve student.');
-                }
-            } catch(err) {
-                console.error("Error:", err);
-            }
-        }
-
-        // Open Reply Modal
-        function openReplyModal(issueId) {
-            document.getElementById('reply-issue-id').value = issueId;
-            document.getElementById('reply-text').value = '';
-            replyModalObj.show();
-        }
-
-        // Submit Reply
-        async function submitReply() {
-            const issueId = document.getElementById('reply-issue-id').value;
-            const replyText = document.getElementById('reply-text').value;
-
-            if(!replyText.trim()) {
-                alert("Please enter a reply message.");
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/api/issues/reply/${issueId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ reply: replyText })
-                });
-
-                if(response.ok) {
-                    alert('Reply submitted & Issue resolved successfully!');
-                    replyModalObj.hide();
-                    loadAllData();
-                } else {
-                    alert('Failed to submit reply.');
-                }
-            } catch(err) {
-                console.error("Error:", err);
-            }
-        }
-
-        loadAllData();
     </script>
 </body>
 </html>
