@@ -83,8 +83,7 @@
     </div>
 
     <script>
-        // Updated to Live Render Backend API
-        const API_URL = 'https://proctorplus-hyim.onrender.com';
+        const API_URL = 'http://127.0.0.1:8000';
 
         function switchTab(role) {
             const studentBtn = document.getElementById('btn-student');
@@ -119,7 +118,7 @@
 
             try {
                 msgDiv.className = "text-xs mt-2 text-center text-indigo-300 font-medium";
-                msgDiv.innerText = "Connecting to server...";
+                msgDiv.innerText = "Verifying credentials...";
 
                 const res = await fetch(`${API_URL}/api/students/approved`);
                 const approvedStudents = await res.json();
@@ -138,7 +137,7 @@
                 }
             } catch (err) {
                 msgDiv.className = "text-xs mt-2 text-center text-red-400 font-medium";
-                msgDiv.innerText = "Server connection error. Please wait 30 sec for Render to wake up.";
+                msgDiv.innerText = "Server connection error. Is backend running?";
             }
         }
 
