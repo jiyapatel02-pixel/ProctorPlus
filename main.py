@@ -1,20 +1,16 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import sqlite3
 import csv
 import io
-import os
 
 app = FastAPI(title="ProctorPlus API - Jiya Patel 25012022018")
 
-# ==========================================
-# CORS Middleware (GitHub Pages માટે)
-# ==========================================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # GitHub Pages અને લોકલ બંનેમાંથી રિક્વેસ્ટ એક્સેપ્ટ કરશે
-    allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -30,14 +26,10 @@ def init_db():
     conn = get_db()
     cursor = conn.cursor()
     
-    # M1 & M2: Students Tables
+    # Tables Creation
     cursor.execute('CREATE TABLE IF NOT EXISTS pending_students (enrollment TEXT PRIMARY KEY, name TEXT, branch TEXT, email TEXT)')
     cursor.execute('CREATE TABLE IF NOT EXISTS students (enrollment TEXT PRIMARY KEY, name TEXT, branch TEXT, email TEXT, status TEXT DEFAULT "Approved")')
-    
-    # M3: Leave Management Table
     cursor.execute('CREATE TABLE IF NOT EXISTS leave_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, enrollment TEXT, from_date TEXT, to_date TEXT, reason TEXT, status TEXT DEFAULT "Pending")')
-    
-    # M4: Student Issues / Tickets Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS student_issues (
             id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -49,11 +41,7 @@ def init_db():
             reply TEXT DEFAULT ""
         )
     ''')
-    
-    # M5: Meetings / Counselling Table
     cursor.execute('CREATE TABLE IF NOT EXISTS meetings (id INTEGER PRIMARY KEY AUTOINCREMENT, enrollment_no TEXT, meeting_date TEXT, topic TEXT, remarks TEXT, status TEXT DEFAULT "Completed")')
-    
-    # M6: Tasks / Follow-ups Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,8 +52,6 @@ def init_db():
             status TEXT DEFAULT "Pending"
         )
     ''')
-    
-    # M7: Announcements & Communication Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS announcements (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -76,7 +62,6 @@ def init_db():
         )
     ''')
     
-    # Safe column check for student_issues reply
     try:
         cursor.execute('ALTER TABLE student_issues ADD COLUMN reply TEXT DEFAULT ""')
     except sqlite3.OperationalError:
@@ -107,7 +92,6 @@ class IssueCreate(BaseModel):
     description: str
 
 class IssueReplyUpdate(BaseModel):
-    status: str
     reply: str
 
 class MeetingCreate(BaseModel):
@@ -127,26 +111,29 @@ class AnnouncementCreate(BaseModel):
     message: str
     target_audience: str
 
+class AIQueryModel(BaseModel):
+    prompt: str
 
-# API Endpoints
+
+# Root Endpoint
 @app.get("/")
 def read_root():
     return {"message": "Welcome to ProctorPlus API! Jiya Patel - 25012022018"}
 
 
 # ==========================================
-# M1 & M2: Student Master & Attendance/Snapshot
+# Student Master & Pending
 # ==========================================
 @app.post("/api/students/register")
 def register_student(student: StudentCreate):
     conn = get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute("INSERT INTO pending_students VALUES (?, ?, ?, ?)", (student.enrollment, student.name, student.branch, student.email))
+        cursor.execute("INSERT OR REPLACE INTO pending_students VALUES (?, ?, ?, ?)", (student.enrollment, student.name, student.branch, student.email))
         conn.commit()
     except Exception as e:
         conn.close()
-        raise HTTPException(status_code=400, detail="Error registering student.")
+        raise HTTPException(status_code=400, detail=str(e))
     conn.close()
     return {"message": "Success"}
 
@@ -193,7 +180,7 @@ def delete_approved_student(enrollment: str):
 
 
 # ==========================================
-# M3: Leave Management
+# Leave Management
 # ==========================================
 @app.post("/api/leaves")
 def create_leave(leave: LeaveRequestCreate):
@@ -206,6 +193,7 @@ def create_leave(leave: LeaveRequestCreate):
         )
         conn.commit()
     except Exception as e:
+        conn.close()
         raise HTTPException(status_code=400, detail=str(e))
     conn.close()
     return {"message": "Leave request submitted successfully"}
@@ -219,7 +207,7 @@ def get_all_leaves():
 
 
 # ==========================================
-# M4: Student Issue / Ticket
+# Student Issues / Tickets
 # ==========================================
 @app.post("/api/issues")
 def create_issue(issue: IssueCreate):
@@ -232,6 +220,7 @@ def create_issue(issue: IssueCreate):
         )
         conn.commit()
     except Exception as e:
+        conn.close()
         raise HTTPException(status_code=400, detail=str(e))
     conn.close()
     return {"message": "Issue raised successfully"}
@@ -243,21 +232,21 @@ def get_all_issues():
     conn.close()
     return [dict(row) for row in rows]
 
-@app.put("/api/issues/{issue_id}")
-def update_issue(issue_id: int, data: IssueReplyUpdate):
+@app.post("/api/issues/reply/{issue_id}")
+def reply_issue(issue_id: int, data: IssueReplyUpdate):
     conn = get_db()
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "UPDATE student_issues SET status = ?, reply = ? WHERE id = ?",
-            (data.status, data.reply, issue_id)
+            "UPDATE student_issues SET status = 'Resolved', reply = ? WHERE id = ?",
+            (data.reply, issue_id)
         )
         conn.commit()
     except Exception as e:
         conn.close()
         raise HTTPException(status_code=400, detail=str(e))
     conn.close()
-    return {"message": "Issue updated successfully"}
+    return {"message": "Reply submitted & resolved successfully"}
 
 @app.delete("/api/issues/{issue_id}")
 def delete_issue(issue_id: int):
@@ -274,7 +263,7 @@ def delete_issue(issue_id: int):
 
 
 # ==========================================
-# M5: Meetings / Counselling
+# Meetings / Counselling
 # ==========================================
 @app.post("/meetings/")
 def create_meeting(meeting: MeetingCreate):
@@ -287,6 +276,7 @@ def create_meeting(meeting: MeetingCreate):
         )
         conn.commit()
     except Exception as e:
+        conn.close()
         raise HTTPException(status_code=400, detail=str(e))
     conn.close()
     return {"message": "Meeting recorded successfully"}
@@ -300,7 +290,7 @@ def get_meetings():
 
 
 # ==========================================
-# M6: Tasks / Follow-ups
+# Tasks / Follow-ups
 # ==========================================
 @app.post("/api/tasks")
 def create_task(task: TaskCreate):
@@ -325,18 +315,9 @@ def get_tasks():
     conn.close()
     return [dict(row) for row in rows]
 
-@app.put("/api/tasks/{task_id}/complete")
-def complete_task(task_id: int):
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE tasks SET status = 'Completed' WHERE id = ?", (task_id,))
-    conn.commit()
-    conn.close()
-    return {"message": "Task marked as completed"}
-
 
 # ==========================================
-# M7: Announcement & Communication
+# Announcements
 # ==========================================
 @app.post("/api/announcements")
 def create_announcement(announcement: AnnouncementCreate):
@@ -363,34 +344,11 @@ def get_announcements():
 
 
 # ==========================================
-# M8: Dashboard & Reports Summary
+# AI Assistant (Frontend JSON Compatible)
 # ==========================================
-@app.get("/api/reports/summary")
-def get_reports_summary():
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    total_students = cursor.execute("SELECT COUNT(*) FROM students").fetchone()[0]
-    pending_leaves = cursor.execute("SELECT COUNT(*) FROM leave_requests WHERE status='Pending'").fetchone()[0]
-    open_issues = cursor.execute("SELECT COUNT(*) FROM student_issues WHERE status='Open'").fetchone()[0]
-    total_meetings = cursor.execute("SELECT COUNT(*) FROM meetings").fetchone()[0]
-    
-    conn.close()
-    
-    return {
-        "total_students": total_students,
-        "pending_leaves": pending_leaves,
-        "open_issues": open_issues,
-        "total_meetings": total_meetings
-    }
-
-
-# ==========================================
-# M9: AI Assistant - Natural Language Query
-# ==========================================
-@app.post("/api/ai/query")
-def ai_assistant_query(query: str = Form(...)):
-    user_q = query.lower()
+@app.post("/api/ai-assistant")
+def ai_assistant_chat(data: AIQueryModel):
+    user_q = data.prompt.lower()
     conn = get_db()
     cursor = conn.cursor()
     response_text = ""
@@ -404,27 +362,27 @@ def ai_assistant_query(query: str = Form(...)):
         elif "પ્રશ્ન" in user_q or "issue" in user_q or "ticket" in user_q:
             cursor.execute("SELECT COUNT(*) FROM student_issues WHERE status='Open'")
             count = cursor.fetchone()[0]
-            response_text = f"સિસ્ટમમાં હાલમાં કુલ {count} ઓપન સમસ્યાઓ (Issues) નિરાકરણ માટે બાકી છે."
+            response_text = f"સિસ્ટમમાં હાલમાં કુલ {count} ઓપન સમસ્યાઓ નિરાકરણ માટે બાકી છે."
             
-        elif "विद्यार्थी" in user_q or "student" in user_q or "total" in user_q:
+        elif "વિદ્યાર્થી" in user_q or "student" in user_q or "total" in user_q:
             cursor.execute("SELECT COUNT(*) FROM students")
             count = cursor.fetchone()[0]
             response_text = f"ડેટાબેઝમાં નોંધાયેલા કુલ સક્રિય વિદ્યાર્થીઓની સંખ્યા {count} છે."
             
         else:
-            response_text = "માફ કરજો, હું આ પ્રશ્ન પૂરેપૂરો સમજી શક્યો નથી. તમે 'પેન્ડિંગ રજાઓ', 'ઓપન ઇશ્યૂ' અથવા 'કુલ વિદ્યાર્થીઓ' વિશે પૂછી શકો છો."
+            response_text = "હું તમારો પ્રશ્ન સમજી ગયો છું. તમે 'પેન્ડિંગ રજાઓ', 'ઓપન ઇશ્યૂ' અથવા 'કુલ વિદ્યાર્થીઓ' વિશે પૂછી શકો છો."
             
     except Exception as e:
-        response_text = f"ડેટાબેઝ ક્વેરી રન કરતી વખતે એરર આવી છે: {str(e)}"
+        response_text = f"એરર આવી છે: {str(e)}"
         
     conn.close()
-    return {"query": query, "response": response_text}
+    return {"response": response_text}
 
 
 # ==========================================
-# M10: Administration - CSV Import
+# CSV Import / Export Endpoints
 # ==========================================
-@app.post("/api/admin/import-students")
+@app.post("/api/students/import-csv")
 async def import_students_csv(file: UploadFile = File(...)):
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="Only CSV files are allowed")
@@ -433,7 +391,7 @@ async def import_students_csv(file: UploadFile = File(...)):
     stream = io.TextIOWrapper(io.BytesIO(content), encoding="utf-8")
     csv_reader = csv.reader(stream)
     
-    next(csv_reader, None) # હેડર લાઇન છોડવા માટે
+    next(csv_reader, None) # Skip header
     
     conn = get_db()
     cursor = conn.cursor()
@@ -451,13 +409,32 @@ async def import_students_csv(file: UploadFile = File(...)):
         conn.commit()
     except Exception as e:
         conn.close()
-        raise HTTPException(status_code=400, detail=f"Error processing CSV: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
     
     conn.close()
     return {"message": f"Successfully imported {count} students."}
 
+@app.get("/api/students/export-csv")
+def export_students_csv():
+    conn = get_db()
+    cursor = conn.cursor()
+    rows = cursor.execute("SELECT enrollment, name, branch, email FROM students").fetchall()
+    conn.close()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Enrollment", "Name", "Branch", "Email"])
+    for row in rows:
+        writer.writerow([row["enrollment"], row["name"], row["branch"], row["email"]])
+    
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=approved_students.csv"}
+    )
+
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="127.0.0.1", port=8000)
